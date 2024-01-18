@@ -1,6 +1,55 @@
 # 俺の最強Todoリスト
 
+## 概要
 
+俺が俺のために作る最強のTodoリスト
+
+## 特徴
+
+- 強力なリマインダー
+    - タスクを完了しないとしつこく通知してくる
+    - 通知の方法はフローティングとプッシュ
+
+## 開発環境
+
+### 言語
+
+- Dart
+
+### フレームワーク
+
+- Flutter
+    - 選定理由
+        - 最近人気らしい
+        - dartがJavaやKotlinと同じような書き方で学習コストが低そう
+        - クロスプラットフォーム：同じコードでも動ける場所が多い
+
+## サーバーサイド
+
+- Spring Framework (with Kotlin)
+
+### 認証認可
+
+- Keycloak
+
+### 監査
+
+- 未定
+
+### DB
+
+- 開発：SQLite
+
+- Production: ？？？
+
+### 開発手法
+
+- Springの最小パターン
+    - Controller
+    - Service
+    - Repository
+
+- interfaceとかは書かない
 
 ## Getting started
 
