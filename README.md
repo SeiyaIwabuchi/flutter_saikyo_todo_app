@@ -26,7 +26,8 @@
 
 ## サーバーサイド
 
-- Spring Framework (with Kotlin)
+1. 第一候補 Ktor + Exposed
+1. 第二候補 Spring Framework (with Kotlin)
 
 ### 認証認可
 
