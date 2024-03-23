@@ -4,6 +4,10 @@
 
 俺が俺のために作る最強のTodoリスト
 
+![](doc_res/item_list.png)
+![](doc_res/add_form.png)
+![](doc_res/edit_form.png)
+
 ## 特徴
 
 - 強力なリマインダー
