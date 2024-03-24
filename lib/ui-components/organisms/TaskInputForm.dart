@@ -130,8 +130,9 @@ class TaskInputForm extends StatelessWidget {
                     .addTask(Task(taskTitle: newTaskName, boardId: boardId, deadlineDatetime: deadline))
                     .then((value) =>
                         showSnackBar(context, "\"$newTaskName\"を追加しました。"))
-                    .catchError((err) {
+                    .catchError((err, stacktrace) {
                   showSnackBar(context, "エラーが発生しました。");
+                  _logger.e(stacktrace);
                   _logger.e(err);
                 });
               },

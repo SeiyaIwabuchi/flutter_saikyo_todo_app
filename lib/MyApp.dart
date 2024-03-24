@@ -15,7 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     TaskApi.init(TaskApiImpl());
     BoardApi.init(BoardApiImpl());
-    Middleware.init(MiddlewareSupabase());
+    // Middleware.init(MiddlewareSupabase());
+    Middleware.init(MiddlewareSpring());
 
     return MaterialApp(
       title: '俺の最強Todoリスト',
