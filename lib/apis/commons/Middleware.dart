@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:js';
 
 import 'package:frontend/models/board/Board.dart';
+import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
 
@@ -9,8 +10,6 @@ import '../../models/task/Task.dart';
 
 abstract interface class Middleware {
   Future<List<Map<String, dynamic>>> get_all_tasks();
-  Future<List<Map<String, dynamic>>> get_done_tasks();
-  Future<List<Map<String, dynamic>>> get_open_tasks();
 
   Future update_task(Task newState);
   Future addTask(Task newTask);
@@ -20,8 +19,8 @@ abstract interface class Middleware {
   Future<List<Map<String, dynamic>>> get_all_boards();
 
   // TODO: RealtimeChannelはフレームワークに依存しているためそれを避ける実装に変更すべき
-  RealtimeChannel subscribeTask(Function(Task) handler);
-  RealtimeChannel subscribeBoard(Function(Board) handler);
+  void subscribeTask(Function(Task) handler);
+  void subscribeBoard(Function(Board) handler);
 
   static late Middleware _impl;
 
@@ -43,16 +42,6 @@ class MiddlewareSupabase implements Middleware {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> get_done_tasks() {
-    return client.rpc("get_done_tasks");
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> get_open_tasks() {
-    return client.rpc("get_open_tasks");
-  }
-
-  @override
   Future update_task(Task newState) {
     Map<String, dynamic> params = {
       "task_id": newState.taskId,
@@ -65,33 +54,33 @@ class MiddlewareSupabase implements Middleware {
   }
 
   @override
-  RealtimeChannel subscribeTask(Function(Task) handler) {
+  void subscribeTask(Function(Task) handler) {
     convert(PostgresChangePayload payload) =>
         handler(Task.fromMap(payload.newRecord));
 
-    return client
-        .channel("tasks")
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: "public",
-            table: "task_history",
-            callback: convert)
-        .subscribe();
+    client
+      .channel("tasks")
+      .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: "public",
+          table: "task_history",
+          callback: convert)
+      .subscribe();
   }
 
   @override
-  RealtimeChannel subscribeBoard(Function(Board) handler) {
+  void subscribeBoard(Function(Board) handler) {
     convert(PostgresChangePayload payload) =>
         handler(Board.fromMap(payload.newRecord));
 
-    return client
-        .channel("boards")
-        .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: "public",
-        table: "boards_history",
-        callback: convert)
-        .subscribe();
+    client
+      .channel("boards")
+      .onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: "public",
+      table: "boards_history",
+      callback: convert)
+      .subscribe();
   }
 
   @override
@@ -137,6 +126,8 @@ class MiddlewareSupabase implements Middleware {
 }
 
 class MiddlewareSpring implements Middleware {
+  final Logger _logger = Logger();
+
   @override
   Future addTask(Task newTask) {
     Map<String, dynamic> params = {
@@ -161,8 +152,20 @@ class MiddlewareSpring implements Middleware {
 
   @override
   Future<List<Map<String, dynamic>>> get_all_boards() {
-    // TODO: implement get_all_boards
-    throw UnimplementedError();
+    return http.get(
+        Uri.parse("http://localhost:8080/board")
+    )
+        .then((value) => jsonDecode(value.body))
+        .then((value) => List.from(value))
+        .then((value) {
+          _logger.d(value);
+          return value.map((e) {
+            return {
+              "board_id": e["boardId"],
+              "tasks_order_list": e["taskOrderList"]
+            };
+          }).toList();
+        });
   }
 
   @override
@@ -171,10 +174,7 @@ class MiddlewareSpring implements Middleware {
       Uri.parse("http://localhost:8080/task")
     )
         .then((value) => jsonDecode(value.body))
-        .then((value) {
-          print(value);
-          return List.from(value) as List<dynamic>;
-        })
+        .then((value) => List.from(value))
         .then((value) => value.map((e) {
           final Map<String, dynamic> map = {
             "task_id": e["taskId"],
@@ -189,31 +189,29 @@ class MiddlewareSpring implements Middleware {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> get_done_tasks() {
-    return get_all_tasks();
+  void subscribeBoard(Function(Board p1) handler) {
+    _logger.w("ボードの購読は実装されていません。");
   }
 
   @override
-  Future<List<Map<String, dynamic>>> get_open_tasks() {
-    return get_all_tasks();
-  }
-
-  @override
-  RealtimeChannel subscribeBoard(Function(Board p1) handler) {
-    // TODO: implement subscribeBoard
-    throw UnimplementedError();
-  }
-
-  @override
-  RealtimeChannel subscribeTask(Function(Task p1) handler) {
-    // TODO: implement subscribeTask
-    throw UnimplementedError();
+  void subscribeTask(Function(Task p1) handler) {
+    _logger.w("タスクの購読は実装されていません。");
   }
 
   @override
   Future update_task(Task newState) {
-    // TODO: implement update_task
-    throw UnimplementedError();
+    Map<String, dynamic> params = {
+      "taskId": newState.taskId,
+      "taskTitle": newState.taskTitle,
+      "taskDoneDateTime": newState.taskDoneDatetime.value?.toIso8601String(),
+      "boardId": newState.boardId,
+      "deadlineDateTime": newState.deadlineDatetime?.toIso8601String()
+    };
+    return http.put(
+        Uri.parse("http://localhost:8080/task"),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(params)
+    );
   }
 
   @override

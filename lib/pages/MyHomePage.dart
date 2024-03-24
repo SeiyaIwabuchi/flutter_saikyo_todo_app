@@ -29,9 +29,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _fetchTasks();
-    // Middleware.getInstance().subscribeTask(_updateTaskView);
-    // Middleware.getInstance().subscribeBoard(_updateBoardView);
-    _updateBoardView(Board(boardId: -1, taskOrderList: []));
+    Middleware.getInstance().subscribeTask(_updateTaskView);
+    Middleware.getInstance().subscribeBoard(_updateBoardView);
   }
 
   List<Task> sortTask(List<int> sortSrc, List<Task> tasks) {
@@ -48,14 +47,13 @@ class _MyHomePageState extends State<MyHomePage> {
   void _fetchTasks() async {
     final List<Task> openTasks = await TaskApi.getInstance().getOpenTasks();
     final List<Task> doneTasks = await TaskApi.getInstance().getDoneTasks();
-    // final Board board = (await BoardApi.getInstance().getAllBoards()).first;
-    final Board board = Board(boardId: -1, taskOrderList: []);
+    final Board board = (await BoardApi.getInstance().getAllBoards()).first;
     final List<Task> sortedOpenTasks =
-      // sortTask(board.taskOrderList, openTasks);
-      sortTask(openTasks.map((e) => e.taskId).toList(), openTasks);
+      sortTask(board.taskOrderList, openTasks);
     final List<Task> sortedCloseTasks =
-        // sortTask(board.taskOrderList, doneTasks);
-        sortTask(doneTasks.map((e) => e.taskId).toList(), doneTasks);
+        sortTask(board.taskOrderList, doneTasks);
+    _logger.d(openTasks);
+    _logger.d(doneTasks);
 
     setState(() {
       _openTasks = sortedOpenTasks;

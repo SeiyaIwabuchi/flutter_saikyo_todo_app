@@ -1,9 +1,13 @@
 
+import 'package:logger/logger.dart';
+
 import '../../models/task/Task.dart';
 import '../commons/Middleware.dart';
 import 'TaskApi.dart';
 
 class TaskApiImpl implements TaskApi {
+  final Logger _logger = Logger();
+
   @override
   Future<List<Task>> getAllTasks() async {
     dynamic result = (await Middleware.getInstance().get_all_tasks());
@@ -17,14 +21,16 @@ class TaskApiImpl implements TaskApi {
 
   @override
   Future<List<Task>> getDoneTasks() async {
-    dynamic result = (await Middleware.getInstance().get_done_tasks());
-    return Task.fromList(result);
+    dynamic result = (await Middleware.getInstance().get_all_tasks());
+    _logger.d(result);
+    return Task.fromList(result).where((element) => element.taskDoneDatetime.value != null).toList();
   }
 
   @override
   Future<List<Task>> getOpenTasks() async {
-    dynamic result = (await Middleware.getInstance().get_open_tasks());
-    return Task.fromList(result);
+    dynamic result = (await Middleware.getInstance().get_all_tasks());
+    _logger.d(result);
+    return Task.fromList(result).where((element) => element.taskDoneDatetime.value == null).toList();
   }
 
   @override
